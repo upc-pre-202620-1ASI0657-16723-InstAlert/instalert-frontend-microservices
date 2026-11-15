@@ -4,6 +4,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { ReporteService } from '../../../../shared/services/reporte.service';
 import * as L from 'leaflet';
+import { UserStore } from '../../../../account/application/user-store';
 
 @Component({
   selector: 'app-reportes',
@@ -19,6 +20,7 @@ export class ReportesComponent implements OnInit, AfterViewInit {
   private map: any;
   private userPosition: [number, number] = [-12.1222, -77.0298];
 
+  page=0;totalPages=0;error="";evidenceList:any[]=[];evidenceIncident=0;
   incidentes: any[] = [];
   incidentesFiltrados: any[] = [];
   riskZones: any[] = [];
@@ -44,6 +46,7 @@ export class ReportesComponent implements OnInit, AfterViewInit {
     private reporteService: ReporteService,
     private cdr: ChangeDetectorRef,
     private router: Router,
+    private userStore: UserStore,
   ) {}
 
   ngOnInit() {}
@@ -106,8 +109,9 @@ export class ReportesComponent implements OnInit, AfterViewInit {
   }
 
   cargarDatos() {
-    this.reporteService.getReportes().subscribe({
-      next: (data) => {
+    this.reporteService.pagina(this.page).subscribe({
+      next: (result) => {
+        this.totalPages=result.totalPages;const data=result.content;
         const idsVistos = new Set();
         const listaProcesada: any[] = [];
 
@@ -128,7 +132,7 @@ export class ReportesComponent implements OnInit, AfterViewInit {
               nivelRiesgo: this.mapearNivelRiesgo(inc.severity || inc.estado),
               hexColor: this.obtenerHexColor(inc.severity || inc.estado),
               coords: [lat, lng],
-              esEliminable: true,
+              esEliminable: inc.userId === this.userStore.user()?.id || this.userStore.isAdmin(),
             });
           }
         });
@@ -137,7 +141,7 @@ export class ReportesComponent implements OnInit, AfterViewInit {
         this.aplicarFiltroRiesgo();
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Error al cargar incidentes:', err),
+      error: () => {this.error='No se pudieron cargar los reportes. Comprueba tu sesión e intenta de nuevo.';},
     });
   }
 
@@ -285,7 +289,7 @@ export class ReportesComponent implements OnInit, AfterViewInit {
         fillOpacity: 1,
       })
         .addTo(this.map)
-        .bindPopup(`<b>${inc.tipo}</b><br>${inc.statusText}`);
+        .bindPopup(this.popupText(`${inc.tipo} — ${inc.statusText}`));
     });
 
     this.emergencias.forEach((em) => {
@@ -304,12 +308,18 @@ export class ReportesComponent implements OnInit, AfterViewInit {
 
           L.marker([lat, lng], { icon: emergIcon })
             .addTo(this.map)
-            .bindPopup(`<b>🚨 Emergencia activa</b><br>${em.type}`);
+              .bindPopup(this.popupText(`Emergencia activa — ${em.type}`));
         }
       }
     });
 
     this.map.panTo(this.userPosition);
+  }
+
+  private popupText(text: string): HTMLElement {
+    const element = document.createElement('span');
+    element.textContent = text;
+    return element;
   }
 
   seleccionarIncidente(incidente: any) {
@@ -349,14 +359,19 @@ export class ReportesComponent implements OnInit, AfterViewInit {
     this.reporteService.actualizarEstado(item.id, nuevoStatus).subscribe({
       next: (updated) => {
         item.statusText = updated.status;
-        item.estado = this.mapearEstadoCSS(updated.status);
-        item.nivelRiesgo = this.mapearNivelRiesgo(updated.status);
+        item.status = updated.status;
+        item.estado = this.mapearEstadoCSS(updated.severity);
+        item.nivelRiesgo = this.mapearNivelRiesgo(updated.severity);
+        this.addMarkers();
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Error al actualizar estado:', err),
+      error: () => {this.error='Solo el propietario o un administrador puede cambiar este reporte.';},
     });
   }
 
+  pagina(delta:number){this.page+=delta;this.cargarDatos();}
+  verEvidencias(id:number){this.evidenceIncident=id;this.evidenceList=[];this.reporteService.evidencias(id).subscribe({next:v=>{this.evidenceList=v;this.error='';},error:()=>this.error='Las evidencias solo están disponibles para su propietario o un administrador.'});}
+  descargar(id:string){this.reporteService.descargarEvidencia(this.evidenceIncident,id).subscribe({next:blob=>{const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='evidencia';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);},error:()=>this.error='No se pudo recuperar el archivo.'});}
   onRadioChange(event: any) {
     this.radioValue = parseFloat((event.target as HTMLInputElement).value);
   }
