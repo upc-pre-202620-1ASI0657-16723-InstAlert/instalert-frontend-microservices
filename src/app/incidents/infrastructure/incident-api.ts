@@ -18,11 +18,12 @@ export class IncidentApi {
   }
 
   createIncident(incident: Partial<Incident>): Observable<Incident> {
-    return this.http.post<Incident>(this.url, incident);
+    const {userId,...body}=incident;
+    return this.http.post<Incident>(this.url, body);
   }
 
   updateIncident(incident: Incident): Observable<Incident> {
-    return this.http.put<Incident>(`${this.url}/${incident.id}`, incident);
+    return this.http.put<Incident>(`${this.url}/${incident.id}/status`, {status:incident.status});
   }
 
   deleteIncident(id: number): Observable<void> {

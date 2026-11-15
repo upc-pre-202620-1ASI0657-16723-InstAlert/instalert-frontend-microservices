@@ -31,6 +31,13 @@ export const routes: Routes = [
       import('./shared/presentation/components/layout/layout').then((m) => m.Layout),
     children: [
       {
+        path: 'avisos',
+        loadComponent: () =>
+          import('./communities/presentation/views/notifications/notifications').then(
+            (m) => m.NotificationsView,
+          ),
+      },
+      {
         path: 'dashboard',
         loadComponent: () =>
           import('./shared/presentation/views/dashboard/dashboard').then(
@@ -47,9 +54,7 @@ export const routes: Routes = [
       {
         path: 'comunidades',
         loadComponent: () =>
-          import('./communities/presentation/views/monitoring-panel-view/monitoring-panel-view').then(
-            (m) => m.MonitoringPanelView,
-          ),
+          import('./communities/presentation/views/community-hub').then((m) => m.CommunityHub),
       },
       {
         path: 'mapa-riesgo',

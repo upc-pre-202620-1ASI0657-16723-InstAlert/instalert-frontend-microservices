@@ -1,3 +1,10 @@
+<section style="padding:12px;background:#fff;color:#17212b">
+<p>Severidad indicada por el autor. No representa una clasificación validada de zonas de riesgo.</p>
+<button (click)="pagina(-1)" [disabled]="page===0">Anterior</button> Página {{page+1}} <button (click)="pagina(1)" [disabled]="page+1>=totalPages">Siguiente</button>
+<p role="alert">{{error}}</p>
+@for(item of incidentes;track item.id){<button (click)="verEvidencias(item.id)">Evidencias del reporte {{item.id}}</button>}
+@for(e of evidenceList;track e.id){<button (click)="descargar(e.id)" [disabled]="e.state!=='AVAILABLE'">{{e.original_name}} — {{e.state}}</button>}
+</section>
 <div class="reportes-container">
   <div class="filters-bar">
     <div class="filters-container">
