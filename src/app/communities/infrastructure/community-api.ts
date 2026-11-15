@@ -21,7 +21,8 @@ export class CommunityApi {
   }
 
   createCommunity(community: any): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/communities`, community);
+    const {ownerId, ...body} = community;
+    return this.http.post<any>(`${this.baseUrl}/communities`, body);
   }
 
   deleteCommunity(id: number): Observable<void> {
