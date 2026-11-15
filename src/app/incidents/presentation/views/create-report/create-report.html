@@ -1,3 +1,4 @@
+<p role="alert">{{error}}</p>
 <div class="crear-reporte-container">
 
   <div class="panel form-panel">
@@ -103,7 +104,7 @@
       </label>
 
       <div class="upload-dropzone" (click)="fileInput.click()">
-        <input type="file" #fileInput (change)="onFileSelected($event)" hidden accept="image/*">
+        <input type="file" #fileInput (change)="onFileSelected($event)" hidden accept="image/png,image/jpeg,application/pdf">
         <div class="icon-cloud">☁️</div>
         <p>{{ 'REPORTES.SUBIR_FOTO' | translate }}</p>
         <p class="upload-hint">
@@ -119,7 +120,7 @@
       }
     </div>
 
-    <button class="btn-publish" (click)="publicarReporte()">
+    <button class="btn-publish" (click)="publicarReporte()" [disabled]="sending">
       ⊳ {{ 'REPORTES.PUBLICAR_REPORTE' | translate }}
     </button>
 
