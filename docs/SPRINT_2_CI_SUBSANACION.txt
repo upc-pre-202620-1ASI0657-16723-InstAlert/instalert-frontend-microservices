@@ -1,0 +1,12 @@
+Subsanacion de evidencia de integracion continua del Sprint 2.
+
+Codigo base: a5c9673fd3d139bbd322d3483434cb352a167805, cierre del 31/10/2026.
+La configuracion CI se incorpora posteriormente, con su fecha real.
+Cada trabajo comprueba que src, public, package.json, package-lock.json,
+angular.json y tsconfig no difieren del commit de cierre.
+
+Node 24 y npm ci ejecutan test:emergencies y test:account y compilan Angular
+en produccion. Los logs y el bundle se conservan durante 30 dias.
+Las pruebas usan mocks HTTP; no se despliega la aplicacion ni se invoca
+el entorno MySQL/Compose. La CI no existia en la entrega original.
+No integrar esta rama historica sobre main/develop del Sprint 3.

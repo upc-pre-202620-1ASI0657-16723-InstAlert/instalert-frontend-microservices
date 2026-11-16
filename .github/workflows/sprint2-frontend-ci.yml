@@ -1,0 +1,88 @@
+name: Sprint 2 Frontend CI - Subsanacion
+
+on:
+  push:
+    branches: [hotfix/sprint2-ci-subsanacion]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sprint2-frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: 'true'
+  NG_CLI_ANALYTICS: 'false'
+
+jobs:
+  test:
+    name: Test ${{ matrix.suite }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [emergencies, account]
+    steps:
+      - name: Checkout Sprint 2 subsanacion
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+      - name: Record historical baseline
+        run: |
+          git merge-base --is-ancestor a5c9673fd3d139bbd322d3483434cb352a167805 HEAD
+          git diff --exit-code a5c9673fd3d139bbd322d3483434cb352a167805 HEAD -- src public package.json package-lock.json angular.json 'tsconfig*.json'
+          echo "Application code: Sprint 2 closure a5c9673. CI added later as subsanacion." >> "$GITHUB_STEP_SUMMARY"
+      - name: Set up Node 24
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Run Sprint 2 regression suite
+        shell: bash
+        run: |
+          mkdir -p ci-results
+          set -o pipefail
+          npm run test:${{ matrix.suite }} 2>&1 | tee ci-results/${{ matrix.suite }}.log
+      - name: Save test log
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: sprint2-frontend-tests-${{ matrix.suite }}
+          path: ci-results/
+          if-no-files-found: warn
+          retention-days: 30
+  build:
+    name: Build Sprint 2 Angular
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout Sprint 2 subsanacion
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+      - name: Record historical baseline
+        run: |
+          git merge-base --is-ancestor a5c9673fd3d139bbd322d3483434cb352a167805 HEAD
+          git diff --exit-code a5c9673fd3d139bbd322d3483434cb352a167805 HEAD -- src public package.json package-lock.json angular.json 'tsconfig*.json'
+          echo "Application code: Sprint 2 closure a5c9673. CI added later as subsanacion." >> "$GITHUB_STEP_SUMMARY"
+      - name: Set up Node 24
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Build production bundle
+        run: npm run build
+      - name: Save production bundle
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: sprint2-frontend-production
+          path: dist/instalert/
+          if-no-files-found: error
+          retention-days: 30
